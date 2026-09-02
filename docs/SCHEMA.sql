@@ -74,13 +74,25 @@ create policy "signed-in users create conversations" on public.conversations
 create policy "creator updates conversation" on public.conversations
   for update using (auth.uid() = created_by);
 
+-- Helper: did the current user create this conversation? Must be security
+-- definer: a plain subquery on conversations inside a policy is itself subject
+-- to the conversations RLS, which requires membership — a bootstrap deadlock
+-- (the creator isn't a member yet when they add themself).
+create or replace function public.is_creator(conv uuid)
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.conversations
+    where id = conv and created_by = auth.uid()
+  );
+$$;
+
 alter table public.conversation_members enable row level security;
 create policy "members see membership" on public.conversation_members
   for select using (public.is_member(conversation_id));
 create policy "members add members" on public.conversation_members
   for insert with check (
     -- either you're adding yourself to a conversation you created, or you're already a member adding someone
-    auth.uid() = user_id and exists (select 1 from public.conversations c where c.id = conversation_id and c.created_by = auth.uid())
+    (auth.uid() = user_id and public.is_creator(conversation_id))
     or public.is_member(conversation_id)
   );
 create policy "users update own membership" on public.conversation_members

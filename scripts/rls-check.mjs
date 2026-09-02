@@ -69,15 +69,17 @@ try {
   // A sets up a private conversation with a message.
   await clientA.from("profiles").insert({ id: userA.id, display_name: "RLS A" });
   await clientB.from("profiles").insert({ id: userB.id, display_name: "RLS B" });
-  const { data: conv, error: convError } = await clientA
+  // Client-generated id — .select() on the insert would be blocked by the
+  // membership SELECT policy until the member row below exists.
+  const conv = { id: crypto.randomUUID() };
+  const { error: convError } = await clientA
     .from("conversations")
-    .insert({ created_by: userA.id })
-    .select()
-    .single();
+    .insert({ id: conv.id, created_by: userA.id });
   if (convError) throw new Error(`create conversation: ${convError.message}`);
-  await clientA
+  const { error: joinError } = await clientA
     .from("conversation_members")
     .insert({ conversation_id: conv.id, user_id: userA.id });
+  check("creator (A) can add themself as a member", !joinError, joinError?.message);
   const msgId = crypto.randomUUID();
   const { error: sendError } = await clientA.from("messages").insert({
     id: msgId,

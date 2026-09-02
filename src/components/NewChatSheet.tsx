@@ -64,16 +64,19 @@ export function NewChatSheet({
 
     setCreating(true);
     setError(null);
-    const { data: conv, error: convError } = await supabase
+    // Client-generated id: .insert().select() would fail RLS here, because
+    // the SELECT policy checks membership and we aren't a member until the
+    // next insert below.
+    const convId = crypto.randomUUID();
+    const { error: convError } = await supabase
       .from("conversations")
-      .insert({ created_by: myId, is_group: ids.length > 1 })
-      .select()
-      .single();
-    if (convError || !conv) {
+      .insert({ id: convId, created_by: myId, is_group: ids.length > 1 });
+    if (convError) {
       setCreating(false);
-      setError(convError?.message ?? "Could not create the chat.");
+      setError(convError.message);
       return;
     }
+    const conv = { id: convId };
 
     // Self first (RLS: creator adds self), then the others (RLS: member adds).
     const { error: selfError } = await supabase
