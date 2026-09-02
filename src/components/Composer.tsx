@@ -3,10 +3,16 @@
 import { useRef, useState } from "react";
 import { SendHorizonal } from "lucide-react";
 
-export function Composer({ onSend }: { onSend: (text: string) => void }) {
+export function Composer({
+  onSend,
+  disabled = false,
+}: {
+  onSend: (text: string) => void;
+  disabled?: boolean;
+}) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
-  const hasText = text.trim().length > 0;
+  const hasText = text.trim().length > 0 && !disabled;
 
   function send() {
     const trimmed = text.trim();
@@ -29,7 +35,8 @@ export function Composer({ onSend }: { onSend: (text: string) => void }) {
         ref={ref}
         value={text}
         rows={1}
-        placeholder="Message"
+        disabled={disabled}
+        placeholder={disabled ? "Chat locked — keys on the way" : "Message"}
         aria-label="Message"
         enterKeyHint="enter"
         className="max-h-[120px] flex-1 resize-none rounded-3xl border border-bao-steam bg-white px-4 py-2.5 text-[15px] leading-snug outline-none placeholder:text-bao-mute focus:border-bao-bao"
@@ -50,7 +57,7 @@ export function Composer({ onSend }: { onSend: (text: string) => void }) {
       <button
         type="button"
         onClick={send}
-        disabled={!hasText}
+        disabled={!hasText || disabled}
         aria-label="Send"
         className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors duration-120 ${
           hasText ? "bg-bao-bao text-bao-ink" : "bg-bao-steam text-bao-mute"

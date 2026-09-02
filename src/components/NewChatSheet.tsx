@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useCrypto } from "@/components/CryptoProvider";
 import type { ChatListEntry, Profile } from "@/lib/supabase/types";
 import { Avatar } from "@/components/Avatar";
 
@@ -17,6 +18,7 @@ export function NewChatSheet({
   onClose: () => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const crypto = useCrypto();
   const router = useRouter();
   const [people, setPeople] = useState<Profile[] | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -67,7 +69,7 @@ export function NewChatSheet({
     // Client-generated id: .insert().select() would fail RLS here, because
     // the SELECT policy checks membership and we aren't a member until the
     // next insert below.
-    const convId = crypto.randomUUID();
+    const convId = window.crypto.randomUUID();
     const { error: convError } = await supabase
       .from("conversations")
       .insert({ id: convId, created_by: myId, is_group: ids.length > 1 });
@@ -94,6 +96,12 @@ export function NewChatSheet({
       setError((selfError ?? othersError)?.message ?? "Could not add members.");
       return;
     }
+
+    // E2EE: mint the conversation key, wrapped for every member who has
+    // published a public key. Members without one get it later via the
+    // key-request rotation flow.
+    const chosen = (people ?? []).filter((p) => ids.includes(p.id));
+    await crypto.createConvKey(convId, chosen);
 
     router.push(`/chats/${conv.id}`);
     onClose();

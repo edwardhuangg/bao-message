@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowDown, ChevronLeft, MoreHorizontal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useApp } from "@/components/AppProvider";
+import { useCrypto } from "@/components/CryptoProvider";
+import { CTRL_LEFT } from "@/lib/supabase/types";
 import { useMessages } from "@/lib/hooks/useMessages";
 import { TopBar } from "@/components/TopBar";
 import { Avatar } from "@/components/Avatar";
@@ -32,10 +34,15 @@ export default function ChatPage() {
   const { userId } = useApp();
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const crypto = useCrypto();
 
   const [detail, setDetail] = useState<ConversationDetail | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { messages, connected, send, retry } = useMessages(id, userId);
+  const [reshared, setReshared] = useState(false);
+  const { messages, connected, hasKey, send, retry, sendControl } = useMessages(
+    id,
+    userId,
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const nearBottomRef = useRef(true);
@@ -81,12 +88,20 @@ export default function ChatPage() {
   }
 
   async function leave() {
+    // Announce first so remaining members' clients rotate the key without us.
+    await sendControl(CTRL_LEFT).catch(() => {});
     await supabase
       .from("conversation_members")
       .delete()
       .eq("conversation_id", id)
       .eq("user_id", userId);
     router.replace("/chats");
+  }
+
+  async function reshareKeys() {
+    const ok = await crypto.rotateConvKey(id);
+    setReshared(ok);
+    if (ok) setTimeout(() => setReshared(false), 3000);
   }
 
   const members = detail?.conversation_members ?? [];
@@ -123,6 +138,13 @@ export default function ChatPage() {
       {!connected && (
         <div className="bg-bao-steam px-4 py-1.5 text-center text-sm text-bao-mute">
           Reconnecting…
+        </div>
+      )}
+
+      {!hasKey && (
+        <div className="bg-bao-bao/40 px-4 py-2 text-center text-sm text-bao-ink">
+          🔒 Waiting for a friend to share this chat&apos;s keys — this fixes
+          itself when one of them opens the app.
         </div>
       )}
 
@@ -190,7 +212,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      <Composer onSend={(text) => void send(text)} />
+      <Composer onSend={(text) => void send(text)} disabled={!hasKey} />
 
       {menuOpen && detail && (
         <div className="fixed inset-0 z-20 flex items-end justify-center">
@@ -223,6 +245,15 @@ export default function ChatPage() {
                 </li>
               ))}
             </ul>
+            <button
+              onClick={reshareKeys}
+              className="mt-4 h-12 w-full rounded-full border border-bao-steam text-[15px] font-semibold text-bao-ink"
+            >
+              {reshared ? "Keys re-shared ✓" : "Re-share encryption keys"}
+            </button>
+            <p className="mt-1 text-center text-xs text-bao-mute">
+              Use this if someone says the chat is locked for them.
+            </p>
             <button
               onClick={leave}
               className="mt-4 h-12 w-full rounded-full border border-bao-danger text-[15px] font-semibold text-bao-danger"

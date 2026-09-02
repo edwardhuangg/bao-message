@@ -29,7 +29,11 @@ export function Bubble({
           mine ? "bg-bao-bao text-bao-ink" : "bg-bao-steam text-bao-ink"
         } ${pending ? "opacity-70" : ""}`}
       >
-        {message.body}
+        {message.decryptFailed ? (
+          <span className="italic text-bao-mute">🔒 Couldn&apos;t decrypt</span>
+        ) : (
+          message.body
+        )}
       </div>
       {failed ? (
         <button

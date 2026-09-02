@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useApp } from "@/components/AppProvider";
+import { useCrypto } from "@/components/CryptoProvider";
 import { TopBar } from "@/components/TopBar";
 import { Avatar } from "@/components/Avatar";
 import { AVATAR_COLORS, AVATAR_EMOJI } from "@/components/WelcomeForm";
@@ -13,7 +14,13 @@ import { AVATAR_COLORS, AVATAR_EMOJI } from "@/components/WelcomeForm";
 export default function ProfilePage() {
   const { userId, email, profile, setProfile } = useApp();
   const supabase = useMemo(() => createClient(), []);
+  const crypto = useCrypto();
   const router = useRouter();
+  const [backupPass, setBackupPass] = useState("");
+  const [backupState, setBackupState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [backupError, setBackupError] = useState<string | null>(null);
 
   const [name, setName] = useState(profile.display_name);
   const [color, setColor] = useState(profile.avatar_color);
@@ -148,6 +155,62 @@ export default function ProfilePage() {
             {error}
           </p>
         )}
+
+        <div className="rounded-[14px] bg-white p-4">
+          <p className="font-semibold">Encryption</p>
+          <p className="mt-1 text-sm text-bao-mute">
+            {crypto.status === "ready"
+              ? "✓ Messages are end-to-end encrypted. This device holds your key."
+              : "Setting up…"}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <input
+              type="password"
+              autoComplete="new-password"
+              placeholder="New backup passphrase"
+              aria-label="New backup passphrase"
+              value={backupPass}
+              onChange={(e) => {
+                setBackupPass(e.target.value);
+                setBackupState("idle");
+              }}
+              className="h-11 min-w-0 flex-1 rounded-full border border-bao-steam bg-bao-cream px-4 text-[15px] outline-none focus:border-bao-bao"
+            />
+            <button
+              type="button"
+              disabled={backupPass.length < 8 || backupState === "saving"}
+              onClick={async () => {
+                setBackupState("saving");
+                setBackupError(null);
+                const err = await crypto.updateBackupPassphrase(backupPass);
+                if (err) {
+                  setBackupState("error");
+                  setBackupError(err);
+                } else {
+                  setBackupState("saved");
+                  setBackupPass("");
+                }
+              }}
+              className="h-11 shrink-0 rounded-full bg-bao-bao px-4 text-sm font-semibold text-bao-ink disabled:opacity-50"
+            >
+              {backupState === "saving"
+                ? "Saving…"
+                : backupState === "saved"
+                  ? "Saved ✓"
+                  : "Update"}
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-bao-mute">
+            The passphrase (8+ characters) unlocks your history on a new phone.
+            If you lose your devices and forget it, old messages are gone for
+            good.
+          </p>
+          {backupError && (
+            <p role="alert" className="mt-1 text-sm text-bao-danger">
+              {backupError}
+            </p>
+          )}
+        </div>
 
         <button
           type="button"

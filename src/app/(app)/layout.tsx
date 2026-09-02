@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AppProvider } from "@/components/AppProvider";
+import { CryptoProvider } from "@/components/CryptoProvider";
 import type { Profile } from "@/lib/supabase/types";
 
 export default async function AppLayout({
@@ -27,7 +28,7 @@ export default async function AppLayout({
       email={user.email ?? ""}
       initialProfile={profile as Profile}
     >
-      {children}
+      <CryptoProvider>{children}</CryptoProvider>
     </AppProvider>
   );
 }

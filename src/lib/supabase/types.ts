@@ -40,9 +40,17 @@ export interface Message {
 export type SendState = "pending" | "sent" | "failed";
 
 // Message as held in client state; sendState is undefined for confirmed rows.
+// body holds decrypted plaintext (memory only — never persisted).
 export interface LocalMessage extends Message {
   sendState?: SendState;
+  decryptFailed?: boolean;
 }
+
+// Plaintext control messages the clients exchange to coordinate key rotation.
+// They are filtered out of the UI and previews.
+export const CONTROL_PREFIX = "__bao:";
+export const CTRL_KEY_REQUEST = "__bao:key_request";
+export const CTRL_LEFT = "__bao:left";
 
 export interface MemberWithProfile extends ConversationMember {
   profiles: Profile;

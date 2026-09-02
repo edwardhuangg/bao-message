@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type {
-  ChatListEntry,
-  Conversation,
-  MemberWithProfile,
-  Message,
+import { useCrypto } from "@/components/CryptoProvider";
+import { decryptBody } from "@/lib/crypto/box";
+import {
+  CONTROL_PREFIX,
+  type ChatListEntry,
+  type Conversation,
+  type MemberWithProfile,
+  type Message,
 } from "@/lib/supabase/types";
 
 interface ConversationRow extends Conversation {
@@ -15,6 +18,7 @@ interface ConversationRow extends Conversation {
 
 export function useConversations(myId: string) {
   const supabase = useMemo(() => createClient(), []);
+  const crypto = useCrypto();
   const [entries, setEntries] = useState<ChatListEntry[] | null>(null);
 
   const reload = useCallback(async () => {
@@ -42,19 +46,32 @@ export function useConversations(myId: string) {
 
     const lastByConv = new Map<string, Message>();
     for (const m of (msgs as Message[]) ?? []) {
+      if (m.body?.startsWith(CONTROL_PREFIX)) continue; // key-rotation chatter
       if (!lastByConv.has(m.conversation_id)) lastByConv.set(m.conversation_id, m);
     }
 
-    const list: ChatListEntry[] = rows.map((c) => {
-      const { conversation_members: members, ...conversation } = c;
-      return {
-        conversation,
-        members,
-        lastMessage: lastByConv.get(c.id) ?? null,
-        myLastReadAt:
-          members.find((m) => m.user_id === myId)?.last_read_at ?? null,
-      };
-    });
+    // Decrypt previews client-side; nothing decrypted is ever stored.
+    const decryptPreview = async (m: Message): Promise<Message> => {
+      if (!m.ciphertext || !m.nonce) return m;
+      const keys = await crypto.getConvKeys(m.conversation_id);
+      const key = keys.get(m.key_version);
+      const body = key ? decryptBody(m.ciphertext, m.nonce, key) : null;
+      return { ...m, body: body ?? "🔒 Message" };
+    };
+
+    const list: ChatListEntry[] = await Promise.all(
+      rows.map(async (c) => {
+        const { conversation_members: members, ...conversation } = c;
+        const last = lastByConv.get(c.id);
+        return {
+          conversation,
+          members,
+          lastMessage: last ? await decryptPreview(last) : null,
+          myLastReadAt:
+            members.find((m) => m.user_id === myId)?.last_read_at ?? null,
+        };
+      }),
+    );
 
     list.sort((a, b) => {
       const ta = a.lastMessage?.created_at ?? a.conversation.created_at;
@@ -62,7 +79,7 @@ export function useConversations(myId: string) {
       return tb.localeCompare(ta);
     });
     setEntries(list);
-  }, [supabase, myId]);
+  }, [supabase, myId, crypto]);
 
   useEffect(() => {
     // reload() awaits network before any setState, so no cascading render.
