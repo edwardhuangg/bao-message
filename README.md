@@ -4,6 +4,8 @@ A private, invite-only chat for a small group of friends. Mobile-first PWA, LINE
 
 Stack: Next.js (App Router) + TypeScript + Tailwind, Supabase (Auth / Postgres / Realtime), tweetnacl. Hosted on Vercel, free tiers only.
 
+**Live:** https://bao-message-rose.vercel.app
+
 Start with [HANDOFF.md](HANDOFF.md), then [CLAUDE.md](CLAUDE.md), [docs/DESIGN.md](docs/DESIGN.md), [docs/SECURITY.md](docs/SECURITY.md), [docs/SCHEMA.sql](docs/SCHEMA.sql).
 
 ## Run locally
