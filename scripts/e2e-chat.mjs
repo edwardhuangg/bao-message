@@ -33,7 +33,7 @@ try {
   const [userA, userB] = users;
   const clientA = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
   const clientB = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } });
-  const { data: sessA } = await clientA.auth.signInWithPassword({ email: emails[0], password });
+  await clientA.auth.signInWithPassword({ email: emails[0], password });
   const { data: sessB } = await clientB.auth.signInWithPassword({ email: emails[1], password });
   // Node: make sure the websocket carries B's JWT so RLS lets events through.
   await clientB.realtime.setAuth(sessB.session.access_token);
