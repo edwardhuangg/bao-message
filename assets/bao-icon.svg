@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#FFF8F0"/>
+  <g transform="translate(88 100)">
+    <!-- steam curl as a tiny speech bubble -->
+    <path d="M210 28c21-14 49-7 56 10.5 7 17.5-7 35-28 35h-31.5c-7 0-10.5-7-7-14 3.5-10.5 3.5-21 10.5-31.5Z" fill="#F2EDE6" stroke="#8A8A8A" stroke-width="7"/>
+    <path d="M217 73.5l-14 21 31.5-7" fill="#F2EDE6"/>
+    <!-- bun body -->
+    <path d="M49 231c0-70 52.5-119 119-119s119 49 119 119c0 21-14 35-35 35H84c-21 0-35-14-35-35Z" fill="#FFD6A5" stroke="#2B2B2B" stroke-width="10.5" stroke-linejoin="round"/>
+    <!-- three pleats -->
+    <path d="M140 115.5c7 17.5 7 31.5 0 45.5M168 112v49M196 115.5c-7 17.5-7 31.5 0 45.5" stroke="#2B2B2B" stroke-width="8.75" stroke-linecap="round" fill="none"/>
+    <!-- face -->
+    <circle cx="133" cy="210" r="8.4" fill="#2B2B2B"/>
+    <circle cx="203" cy="210" r="8.4" fill="#2B2B2B"/>
+    <path d="M154 231c8.75 8.75 19.25 8.75 28 0" stroke="#2B2B2B" stroke-width="8.75" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

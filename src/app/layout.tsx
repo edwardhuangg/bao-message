@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { RegisterSW } from "@/components/RegisterSW";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto flex w-full max-w-[480px] flex-1 flex-col bg-bao-cream sm:shadow-[0_0_24px_rgba(43,43,43,0.06)]">
           {children}
         </div>
+        <RegisterSW />
       </body>
     </html>
   );

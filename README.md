@@ -31,10 +31,24 @@ Signups are rejected unless the email is in the `allowlist` table (enforced by a
 insert into public.allowlist (email, note) values ('friend@example.com', 'friend');
 ```
 
+## Supabase auth config (one-time)
+
+In Supabase → **Authentication → URL Configuration**:
+- **Site URL**: your production URL, e.g. `https://bao-message.vercel.app`
+- **Redirect URLs**: add `https://<your-prod-domain>/auth/callback` and `http://localhost:3000/auth/callback`
+
+Without this, magic-link emails point at localhost.
+
 ## Checks
 
 ```sh
 pnpm lint
 pnpm typecheck
 pnpm build
+node scripts/rls-check.mjs    # verifies row-level security (needs SUPABASE_SERVICE_ROLE_KEY in .env.local)
+node scripts/generate-icons.mjs  # re-render PWA icons after editing assets/bao-icon.svg
 ```
+
+## Keep-alive
+
+Supabase free projects pause after ~7 days of inactivity. `vercel.json` schedules a daily Vercel Cron request to `/api/ping` (a one-row `select`) to prevent that.
