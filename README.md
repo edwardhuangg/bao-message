@@ -46,6 +46,7 @@ pnpm lint
 pnpm typecheck
 pnpm build
 node scripts/rls-check.mjs    # verifies row-level security (needs SUPABASE_SERVICE_ROLE_KEY in .env.local)
+node scripts/e2e-chat.mjs     # two-user chat flow incl. realtime delivery (same key requirement)
 node scripts/generate-icons.mjs  # re-render PWA icons after editing assets/bao-icon.svg
 ```
 
