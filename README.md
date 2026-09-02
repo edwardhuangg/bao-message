@@ -33,13 +33,17 @@ Signups are rejected unless the email is in the `allowlist` table (enforced by a
 insert into public.allowlist (email, note) values ('friend@example.com', 'friend');
 ```
 
-## Supabase auth config (one-time)
+## Auth (email + password, no email service)
 
-In Supabase → **Authentication → URL Configuration**:
-- **Site URL**: your production URL, e.g. `https://bao-message.vercel.app`
-- **Redirect URLs**: add `https://<your-prod-domain>/auth/callback` and `http://localhost:3000/auth/callback`
+Sign-in is plain email + password — no emails are ever sent. The invite gate still holds: a database trigger rejects any signup whose email isn't in `allowlist`. One-time Supabase setting for this to work: **Authentication → Sign In / Providers → Email → turn OFF "Confirm email"** (otherwise signups wait for a confirmation email that never sends).
 
-Without this, magic-link emails point at localhost.
+Forgot password? No reset emails exist — the host runs:
+
+```sh
+node scripts/reset-password.mjs friend@example.com "temporary-password"
+```
+
+and tells them out-of-band; they change it afterwards in Profile. (The encryption backup passphrase is separate and can never be reset by anyone.)
 
 ## Checks
 

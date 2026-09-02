@@ -11,6 +11,58 @@ import { TopBar } from "@/components/TopBar";
 import { Avatar } from "@/components/Avatar";
 import { AVATAR_COLORS, AVATAR_EMOJI } from "@/components/WelcomeForm";
 
+// Set or change the account password (used since auth moved off magic links).
+function PasswordSection() {
+  const supabase = useMemo(() => createClient(), []);
+  const [pass, setPass] = useState("");
+  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="rounded-[14px] bg-white p-4">
+      <p className="font-semibold">Password</p>
+      <div className="mt-3 flex gap-2">
+        <input
+          type="password"
+          autoComplete="new-password"
+          placeholder="New password (8+)"
+          aria-label="New password"
+          value={pass}
+          onChange={(e) => {
+            setPass(e.target.value);
+            setState("idle");
+          }}
+          className="h-11 min-w-0 flex-1 rounded-full border border-bao-steam bg-bao-cream px-4 text-[15px] outline-none focus:border-bao-bao"
+        />
+        <button
+          type="button"
+          disabled={pass.length < 8 || state === "saving"}
+          onClick={async () => {
+            setState("saving");
+            setError(null);
+            const { error } = await supabase.auth.updateUser({ password: pass });
+            if (error) {
+              setState("idle");
+              setError(error.message);
+            } else {
+              setState("saved");
+              setPass("");
+            }
+          }}
+          className="h-11 shrink-0 rounded-full bg-bao-bao px-4 text-sm font-semibold text-bao-ink disabled:opacity-50"
+        >
+          {state === "saving" ? "Saving…" : state === "saved" ? "Saved ✓" : "Update"}
+        </button>
+      </div>
+      {error && (
+        <p role="alert" className="mt-1 text-sm text-bao-danger">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { userId, email, profile, setProfile } = useApp();
   const supabase = useMemo(() => createClient(), []);
@@ -155,6 +207,8 @@ export default function ProfilePage() {
             {error}
           </p>
         )}
+
+        <PasswordSection />
 
         <div className="rounded-[14px] bg-white p-4">
           <p className="font-semibold">Encryption</p>
