@@ -25,13 +25,23 @@ pnpm dev
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only; only for a future allowlist admin route. Never expose to the client. |
 | `PING_SECRET` | Optional secret for the `/api/ping` keep-alive cron |
 
-## Adding someone to the guest list
+## Adding a friend
 
-Signups are rejected unless the email is in the `allowlist` table (enforced by a Postgres trigger). For now, add rows in the Supabase dashboard:
+**Easiest (works always):** create their account directly — allowlists them, no email involved:
+
+```sh
+node scripts/create-user.mjs friend@example.com "temp-password"
+```
+
+Tell them the temp password privately; they sign in and change it in Profile.
+
+**Self-signup alternative:** add just their email to the allowlist and let them use "Create account" on the login page:
 
 ```sql
 insert into public.allowlist (email, note) values ('friend@example.com', 'friend');
 ```
+
+Self-signup requires "Confirm email" to be OFF in Supabase (see Auth section below); the trigger rejects non-allowlisted emails either way.
 
 ## Auth (email + password, no email service)
 
